@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>የቢንጎ ጨዋታ</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding: 20px; }
+    h1 { color: #ffeb3b; }
+    .board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 350px; margin: 20px auto; }
+    .cell { background: #1e1e1e; border: 2px solid #ffeb3b; border-radius: 8px; padding: 15px; font-size: 20px; font-weight: bold; cursor: pointer; user-select: none; }
+    .cell.selected { background: #4caf50; color: white; border-color: #4caf50; }
+    button { padding: 10px 20px; font-size: 16px; background: #ffeb3b; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>🎲 የቢንጎ ጨዋታ 🎲</h1>
+  <p>ቁጥሮቹን በመጫን ምልክት ያድርጉ!</p>
+  
+  <div class="board" id="board"></div>
+  <button onclick="generateBoard()">አዲስ ካርድ ቀይር</button>
+
+  <script>
+    function generateBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      let numbers = Array.from({length: 75}, (_, i) => i + 1).sort(() => 0.5 - Math.random()).slice(0, 25);
+      
+      numbers.forEach((num, index) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        if (index === 12) {
+          cell.innerText = 'FREE';
+          cell.classList.add('selected');
+        } else {
+          cell.innerText = num;
+          cell.onclick = () => cell.classList.toggle('selected');
+        }
+        board.appendChild(cell);
+      });
+    }
+    generateBoard();
+  </script>
+</body>
+</html>
