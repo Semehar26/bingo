@@ -1,58 +1,113 @@
-
-
-
 <!DOCTYPE html>
 <html lang="am">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ፕሮፌሽናል የቢንጎ ጨዋታ</title>
+  <title>ፕሮፌሽናል የቢንጎ ጨዋታ ከዳሽቦርድ ጋር</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #111; color: #fff; padding: 15px; margin: 0; }
-    h1 { color: #f39c12; }
-    .wallet-box { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #444; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #121212; color: #fff; padding: 15px; margin: 0; }
+    h1 { color: #f39c12; margin-bottom: 5px; }
+    
+    /* Dashboard Styles */
+    .dashboard { display: flex; justify-content: space-around; background: #1e1e1e; padding: 10px; border-radius: 10px; border: 1px solid #333; margin-bottom: 15px; }
+    .dash-card { text-align: center; }
+    .dash-card div { font-size: 12px; color: #aaa; }
+    .dash-card strong { font-size: 18px; color: #f39c12; }
+
+    /* Controls */
+    .controls-box { background: #1e1e1e; padding: 12px; border-radius: 10px; border: 1px solid #333; margin-bottom: 15px; }
+    select, button { padding: 8px 12px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; margin: 3px; }
+    select { background: #333; color: #fff; }
+    
     .board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 320px; margin: 15px auto; }
-    .cell { background: #333; border: 1px solid #f39c12; border-radius: 5px; padding: 12px 0; font-size: 18px; font-weight: bold; cursor: pointer; }
+    .cell { background: #2a2a2a; border: 1px solid #f39c12; border-radius: 5px; padding: 12px 0; font-size: 18px; font-weight: bold; cursor: pointer; }
     .cell.selected { background: #27ae60; color: #fff; }
-    .btn { padding: 10px 15px; font-size: 14px; background: #e67e22; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 5px; }
+    
+    .btn { background: #e67e22; color: #fff; }
     .btn-buy { background: #2980b9; }
+    .btn-start { background: #27ae60; }
+    .btn-stop { background: #c0392b; }
   </style>
 </head>
 <body>
 
-  <h1>🎲 ፕሮፌሽናል የቢንጎ ጨዋታ 🎲</h1>
+  <h1>🎲 ቢንጎ ማስተር 🎲</h1>
 
-  <div class="wallet-box">
-    <div>የሂሳብ መጠን (Wallet)፦ <strong id="balance" style="color:#2ecc71;">100</strong> ብር</div>
-    <div>የተሰበሰበ ጠቅላላ ብር (Pool)፦ <strong id="totalPool" style="color:#f1c40f;">0</strong> ብር</div>
+  <!-- Dashboard -->
+  <div class="dashboard">
+    <div class="dash-card"><div>የሂሳብ መጠን</div><strong id="balance" style="color:#2ecc71;">100</strong> ብር</div>
+    <div class="dash-card"><div>የተጫወቱት ጨዋታ</div><strong id="gamesPlayed">0</strong></div>
+    <div class="dash-card"><div>ድል (Wins)</div><strong id="winsCount" style="color:#2ecc71;">0</strong></div>
+    <div class="dash-card"><div>የጠቅላላ ፖል (Pool)</div><strong id="totalPool">0</strong> ብር</div>
+  </div>
+
+  <!-- Game Settings & Timers -->
+  <div class="controls-box">
+    <div>
+      <label>የጨዋታ አይነት፦ </label>
+      <select id="gameMode" onchange="resetGame()">
+        <option value="75">Standard (75 ቁጥሮች)</option>
+        <option value="25">Quick (25 ቁጥሮች)</option>
+      </select>
+    </div>
+    <div style="margin-top: 8px;">
+      <label>የመጥሪያ ሰከንድ፦ </label>
+      <select id="timerInterval">
+        <option value="3">በየ 3 ሰከንዱ</option>
+        <option value="5" selected>በየ 5 ሰከንዱ</option>
+        <option value="8">በየ 8 ሰከንዱ</option>
+      </select>
+    </div>
   </div>
 
   <div>
-    <div>የተጠራ ቁጥር፦ <strong id="calledNum" style="font-size: 28px; color: #e74c3c;">-</strong></div>
+    <div>የተጠራ ቁጥር፦ <strong id="calledNum" style="font-size: 32px; color: #e74c3c;">-</strong></div>
   </div>
 
   <div class="board" id="board"></div>
 
   <div>
     <button class="btn btn-buy" onclick="buyCard()">ካርድ ግዛ (10 ብር)</button>
-    <button class="btn" onclick="drawNumberWithVoice()">ቁጥር በድምፅ ጥራ</button>
+    <button class="btn btn-start" onclick="startAutoDraw()">ጨዋታ ጀምር (በሰከንድ)</button>
+    <button class="btn btn-stop" onclick="stopAutoDraw()">ቁም</button>
   </div>
 
   <script>
     const SUPABASE_URL = "https://byorbdmwyunjfqkkygct.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_BA3vdxXDmCQPsp..."; // ሙሉውን ቁልፍ እዚህ ይተኩ
+    const SUPABASE_KEY = "sb_publishable_BA3vdxXDmCQPsp..."; // ሙሉ ቁልፍዎን እዚህ ይተኩ
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let balance = 100;
     let totalPool = 0;
+    let gamesPlayed = 0;
+    let winsCount = 0;
     const cardPrice = 10;
+    
     let drawnNumbers = [];
+    let autoDrawInterval = null;
+
+    // ቁጥሮችን ወደ አማርኛ ቃላት መቀየሪያ
+    function numberToAmharic(num) {
+      const units = ["", "አንድ", "ሁለት", "ሦስት", "አራት", "አምስት", "ስድስት", "ሰባት", "ስምንት", "ዘጠኝ"];
+      const tens = ["", "አሥር", "ሀያ", "ሠላሳ", "አርባ", "ሃምሳ", "ስድሳ", "ሰባ", "ሰማንያ", "ዘጠና"];
+      
+      if (num === 0) return "ዜሮ";
+      if (num < 10) return units[num];
+      if (num === 10) return "አሥር";
+      if (num < 20) return "አሥራ " + units[num % 10];
+      
+      let t = Math.floor(num / 10);
+      let u = num % 10;
+      return tens[t] + (u > 0 ? " " + units[u] : "");
+    }
 
     function speakNumber(num) {
       if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance("Number " + num);
-        utterance.rate = 0.9;
+        const textToSpeak = numberToAmharic(num);
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'am-ET'; // የአማርኛ ድምፅ ቅንብር
+        utterance.rate = 0.85;
         window.speechSynthesis.speak(utterance);
       }
     }
@@ -64,15 +119,21 @@
       }
       balance -= cardPrice;
       totalPool += cardPrice;
+      gamesPlayed++;
+      
       document.getElementById('balance').innerText = balance;
       document.getElementById('totalPool').innerText = totalPool;
+      document.getElementById('gamesPlayed').innerText = gamesPlayed;
+      
       generateBoard();
     }
 
     function generateBoard() {
       const board = document.getElementById('board');
       board.innerHTML = '';
-      let numbers = Array.from({length: 75}, (_, i) => i + 1).sort(() => 0.5 - Math.random()).slice(0, 25);
+      const mode = parseInt(document.getElementById('gameMode').value);
+      
+      let numbers = Array.from({length: mode}, (_, i) => i + 1).sort(() => 0.5 - Math.random()).slice(0, 25);
       
       numbers.forEach((num, index) => {
         const cell = document.createElement('div');
@@ -89,18 +150,41 @@
     }
 
     function drawNumberWithVoice() {
-      if (drawnNumbers.length >= 75) {
-        alert("ሁሉም ቁጥሮች ተጠርተዋል!");
+      const maxNum = parseInt(document.getElementById('gameMode').value);
+      if (drawnNumbers.length >= maxNum) {
+        stopAutoDraw();
+        alert("ጨዋታው ተጠናቋል! ሁሉም ቁጥሮች ተጠርተዋል!");
         return;
       }
       let rand;
       do {
-        rand = Math.floor(Math.random() * 75) + 1;
+        rand = Math.floor(Math.random() * maxNum) + 1;
       } while (drawnNumbers.includes(rand));
       
       drawnNumbers.push(rand);
       document.getElementById('calledNum').innerText = rand;
       speakNumber(rand);
+    }
+
+    function startAutoDraw() {
+      if (autoDrawInterval) clearInterval(autoDrawInterval);
+      const seconds = parseInt(document.getElementById('timerInterval').value) * 1000;
+      drawNumberWithVoice();
+      autoDrawInterval = setInterval(drawNumberWithVoice, seconds);
+    }
+
+    function stopAutoDraw() {
+      if (autoDrawInterval) {
+        clearInterval(autoDrawInterval);
+        autoDrawInterval = null;
+      }
+    }
+
+    function resetGame() {
+      stopAutoDraw();
+      drawnNumbers = [];
+      document.getElementById('calledNum').innerText = '-';
+      generateBoard();
     }
 
     generateBoard();
