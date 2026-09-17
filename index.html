@@ -3,26 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>የቢንጎ ጨዋታ</title>
+  <title>የብዙ ተጫዋቾች ቢንጎ</title>
   <style>
-    body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding: 20px; }
-    h1 { color: #ffeb3b; }
-    .board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 350px; margin: 20px auto; }
-    .cell { background: #1e1e1e; border: 2px solid #ffeb3b; border-radius: 8px; padding: 15px; font-size: 20px; font-weight: bold; cursor: pointer; user-select: none; }
-    .cell.selected { background: #4caf50; color: white; border-color: #4caf50; }
-    button { padding: 10px 20px; font-size: 16px; background: #ffeb3b; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+    body { font-family: Arial, sans-serif; text-align: center; background: #1a1a2e; color: #fff; margin: 0; padding: 15px; }
+    h1 { color: #e94560; }
+    .status { background: #16213e; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: inline-block; }
+    .board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 320px; margin: 0 auto; }
+    .cell { background: #0f3460; border: 2px solid #e94560; border-radius: 6px; padding: 12px 0; font-size: 18px; font-weight: bold; cursor: pointer; user-select: none; }
+    .cell.selected { background: #e94560; color: #fff; }
+    .controls { margin-top: 15px; }
+    button { padding: 10px 18px; font-size: 15px; background: #e94560; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 5px; }
+    button:hover { background: #0f3460; }
   </style>
 </head>
 <body>
 
-  <h1>🎲 የቢንጎ ጨዋታ 🎲</h1>
-  <p>ቁጥሮቹን በመጫን ምልክት ያድርጉ!</p>
+  <h1>🎲 የቢንጎ ጨዋታ (Multiplayer) 🎲</h1>
   
+  <div class="status">
+    <div>የተጠራው ቁጥር፡ <strong id="calledNum" style="font-size: 24px; color: #ff2e63;">-</strong></div>
+  </div>
+
   <div class="board" id="board"></div>
-  <button onclick="generateBoard()">አዲስ ካርድ ቀይር</button>
+
+  <div class="controls">
+    <button onclick="drawNumber()">ቁጥር ጥራ (ለሰብሳቢ)</button>
+    <button onclick="newCard()">አዲስ ካርድ ቀይር</button>
+  </div>
 
   <script>
-    function generateBoard() {
+    let drawnNumbers = [];
+
+    function newCard() {
       const board = document.getElementById('board');
       board.innerHTML = '';
       let numbers = Array.from({length: 75}, (_, i) => i + 1).sort(() => 0.5 - Math.random()).slice(0, 25);
@@ -40,7 +52,23 @@
         board.appendChild(cell);
       });
     }
-    generateBoard();
+
+    function drawNumber() {
+      if (drawnNumbers.length >= 75) {
+        alert("ሁሉም ቁጥሮች ተጠርተዋል!");
+        return;
+      }
+      let rand;
+      do {
+        rand = Math.floor(Math.random() * 75) + 1;
+      } while (drawnNumbers.includes(rand));
+      
+      drawnNumbers.push(rand);
+      document.getElementById('calledNum').innerText = rand;
+    }
+
+    newCard();
   </script>
 </body>
 </html>
+
